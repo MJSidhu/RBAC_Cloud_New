@@ -1,0 +1,54 @@
+{
+  "name": "multi-tenant-rbac-system",
+  "version": "1.0.0",
+  "description": "Multi-Tenant Role-Based Access Control System with PostgreSQL",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "verify": "node src/verify-setup.js",
+    "verify:db": "node src/verify-database-connection.js",
+    "test:db": "node src/tests/database-connection.test.js",
+    "db:setup": "psql -d rbac_system -f database/schema.sql && psql -d rbac_system -f database/rls-policies.sql",
+    "db:setup-supabase": "node database/apply-schema-supabase.js",
+    "db:create": "createdb rbac_system",
+    "db:drop": "dropdb rbac_system",
+    "db:reset": "npm run db:drop && npm run db:create && npm run db:setup",
+    "db:verify-rls": "node database/verify-rls.js",
+    "db:test-rls": "psql -d rbac_system -f database/test-rls-isolation.sql",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "rbac",
+    "multi-tenant",
+    "authorization",
+    "postgresql",
+    "row-level-security"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.11.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.3.5",
+    "jest": "^30.2.0",
+    "supertest": "^7.2.2"
+  }
+}
