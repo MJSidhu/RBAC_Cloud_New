@@ -258,13 +258,13 @@ router.post('/invite',
 
     const tenant_id = req.user.tenant_id;
 
-    // Check email not already taken in this tenant
+    // Check email not already taken globally (across all tenants)
     const existing = await pool.query(
-      'SELECT user_id FROM users WHERE email = $1 AND tenant_id = $2',
-      [email, tenant_id]
+      'SELECT user_id FROM users WHERE email = $1',
+      [email]
     );
     if (existing.rows.length > 0) {
-      throw new ValidationError('A user with this email already exists in your organization');
+      throw new ValidationError('A user with this email already exists');
     }
 
     // Verify role belongs to this tenant

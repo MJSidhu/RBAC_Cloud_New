@@ -252,8 +252,12 @@ function RolesTab({ tenantId, roles, permissions, onRefresh }) {
             <div style={{ marginTop: 16 }}>
               {rolePerms.length === 0 ? <p style={{ color: '#6b7280', fontSize: 13 }}>No permissions assigned.</p> : rolePerms.map(p => (
                 <div key={p.permission_id} style={s.permRow}>
-                  <span><code style={s.code}>{p.resource_name}</code> <span style={{ ...s.actionBadge, ...actionColor(p.action) }}>{p.action}</span></span>
-                  <button onClick={() => handleRemovePerm(p.permission_id)} style={s.btnDanger}>Remove</button>
+                  <span>
+                    <code style={s.code}>{p.resource_name}</code>{' '}
+                    <span style={{ ...s.actionBadge, ...actionColor(p.action) }}>{p.action}</span>{' '}
+                    {p.inherited && <span style={{ fontSize: 11, color: '#9ca3af', marginLeft: 4 }}>(inherited)</span>}
+                  </span>
+                  {!p.inherited && <button onClick={() => handleRemovePerm(p.permission_id)} style={s.btnDanger}>Remove</button>}
                 </div>
               ))}
             </div>

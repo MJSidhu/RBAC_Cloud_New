@@ -17,6 +17,7 @@ const {
 } = require('../services/rbacService');
 const { requirePermission } = require('../middleware/pdpMiddleware');
 const { asyncHandler, ValidationError, ResourceNotFoundError } = require('../middleware/errorHandler');
+const { permissionCache } = require('../services/permissionCache');
 
 const router = express.Router();
 
@@ -190,6 +191,9 @@ router.put(
     // Update role (will validate hierarchy if parent is changed)
     const updatedRole = await updateRole(tenantId, roleId, updates);
 
+    // Invalidate cache for all users in tenant — permissions may have changed
+    permissionCache.invalidateTenant(tenantId);
+
     res.json({
       role: updatedRole,
     });
@@ -234,6 +238,9 @@ router.delete(
 
     // Delete role (will cascade delete assignments and permissions)
     await deleteRole(tenantId, roleId);
+
+    // Invalidate cache for all users in tenant
+    permissionCache.invalidateTenant(tenantId);
 
     res.json({
       success: true,

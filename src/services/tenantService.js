@@ -178,7 +178,7 @@ async function provisionTenant(issuerId, tenantName, adminEmail, adminPassword) 
       if (error.constraint === 'tenants_issuer_id_name_key') {
         throw new Error(`Tenant with name "${tenantName}" already exists for this issuer`);
       } else if (error.constraint === 'users_tenant_id_email_key') {
-        throw new Error(`User with email "${adminEmail}" already exists in this tenant`);
+        throw new Error(`User with email "${adminEmail}" already exists`);
       }
     } else if (error.code === '23503') { // Foreign key violation
       throw new Error('Invalid issuer ID - issuer does not exist');

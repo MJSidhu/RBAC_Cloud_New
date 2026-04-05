@@ -6,12 +6,23 @@
 
 const { pool } = require('../config/database');
 
+// Resources worth auditing — skip internal admin panel reads
+const AUDITED_RESOURCES = ['files/*', 'reports/*', 'settings', 'users/*'];
+
+function shouldAudit(resource, decision) {
+  // Always log DENY decisions
+  if (decision === 'DENY') return true;
+  // For ALLOW, only log demo resource actions
+  return AUDITED_RESOURCES.some(r => resource === r || resource.startsWith(r.replace('*', '')));
+}
+
 /**
  * Log an authorization decision asynchronously (non-blocking).
  */
 function logAuthorizationDecision(userId, tenantId, resource, action, decision, ipAddress) {
   if (!tenantId || !resource || !action || !decision) return;
   if (decision !== 'ALLOW' && decision !== 'DENY') return;
+  if (!shouldAudit(resource, decision)) return;
 
   setImmediate(async () => {
     try {
