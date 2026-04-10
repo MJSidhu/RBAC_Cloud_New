@@ -1,24 +1,12 @@
-/**
- * Audit Service
- * Manages audit logging for authorization decisions.
- * Requirements: 8.1, 8.2, 8.3, 8.6
- */
-
 const { pool } = require('../config/database');
 
-// Resources worth auditing — skip internal admin panel reads
 const AUDITED_RESOURCES = ['files/*', 'reports/*', 'settings', 'users/*'];
 
 function shouldAudit(resource, decision) {
-  // Always log DENY decisions
   if (decision === 'DENY') return true;
-  // For ALLOW, only log demo resource actions
   return AUDITED_RESOURCES.some(r => resource === r || resource.startsWith(r.replace('*', '')));
 }
 
-/**
- * Log an authorization decision asynchronously (non-blocking).
- */
 function logAuthorizationDecision(userId, tenantId, resource, action, decision, ipAddress) {
   if (!tenantId || !resource || !action || !decision) return;
   if (decision !== 'ALLOW' && decision !== 'DENY') return;
@@ -36,9 +24,6 @@ function logAuthorizationDecision(userId, tenantId, resource, action, decision, 
   });
 }
 
-/**
- * Query audit logs with filters.
- */
 async function queryAuditLogs(tenantId, filters = {}) {
   if (!tenantId) throw new Error('tenantId is required');
 
@@ -48,19 +33,19 @@ async function queryAuditLogs(tenantId, filters = {}) {
   const params = [tenantId];
   let p = 2;
 
-  if (userId)    { conditions.push('user_id = $'    + p++); params.push(userId); }
-  if (resource)  { conditions.push('resource = $'   + p++); params.push(resource); }
-  if (action)    { conditions.push('action = $'     + p++); params.push(action); }
-  if (decision)  { conditions.push('decision = $'   + p++); params.push(decision); }
-  if (startDate) { conditions.push('timestamp >= $' + p++); params.push(startDate); }
-  if (endDate)   { conditions.push('timestamp <= $' + p++); params.push(endDate); }
+  if (userId)    { conditions.push(`user_id = $${p++}`); params.push(userId); }
+  if (resource)  { conditions.push(`resource = $${p++}`); params.push(resource); }
+  if (action)    { conditions.push(`action = $${p++}`); params.push(action); }
+  if (decision)  { conditions.push(`decision = $${p++}`); params.push(decision); }
+  if (startDate) { conditions.push(`timestamp >= $${p++}`); params.push(startDate); }
+  if (endDate)   { conditions.push(`timestamp <= $${p++}`); params.push(endDate); }
 
   const where = conditions.join(' AND ');
 
   try {
-    const countResult = await pool.query('SELECT COUNT(*) as total FROM audit_logs WHERE ' + where, params);
+    const countResult = await pool.query(`SELECT COUNT(*) as total FROM audit_logs WHERE ${where}`, params);
     const dataResult = await pool.query(
-      'SELECT log_id, user_id, tenant_id, resource, action, decision, ip_address, timestamp FROM audit_logs WHERE ' + where + ' ORDER BY timestamp DESC LIMIT $' + p + ' OFFSET $' + (p + 1),
+      `SELECT log_id, user_id, tenant_id, resource, action, decision, ip_address, timestamp FROM audit_logs WHERE ${where} ORDER BY timestamp DESC LIMIT $${p} OFFSET $${p + 1}`,
       [...params, limit, offset]
     );
 

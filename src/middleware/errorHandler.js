@@ -1,8 +1,3 @@
-/**
- * Centralized error handling middleware
- * Handles all errors and returns consistent error responses
- */
-
 class AppError extends Error {
   constructor(message, statusCode, code, details = null) {
     super(message);
@@ -14,7 +9,6 @@ class AppError extends Error {
   }
 }
 
-// Specific error classes
 class ValidationError extends AppError {
   constructor(message, details = null) {
     super(message, 400, 'VALIDATION_INVALID_INPUT', details);
@@ -99,15 +93,12 @@ class InternalServerError extends AppError {
   }
 }
 
-// Main error handler middleware
 function errorHandler(err, req, res, next) {
-  // Default to 500 server error
   let statusCode = err.statusCode || 500;
   let errorCode = err.code || 'INTERNAL_SERVER_ERROR';
   let message = err.message || 'An unexpected error occurred';
   let details = err.details || null;
 
-  // Handle specific error types
   if (err.name === 'ValidationError') {
     statusCode = 400;
     errorCode = 'VALIDATION_INVALID_INPUT';
@@ -120,31 +111,24 @@ function errorHandler(err, req, res, next) {
     errorCode = 'AUTH_TOKEN_EXPIRED';
     message = 'Authentication token has expired';
   } else if (err.code === '23505') {
-    // PostgreSQL unique violation
     statusCode = 409;
     errorCode = 'CONFLICT_DUPLICATE_RESOURCE';
     message = 'A resource with this identifier already exists';
-    details = {
-      constraint: err.constraint,
-    };
+    details = { constraint: err.constraint };
   } else if (err.code === '23503') {
-    // PostgreSQL foreign key violation
     statusCode = 400;
     errorCode = 'VALIDATION_FOREIGN_KEY_VIOLATION';
     message = 'Referenced resource does not exist';
   } else if (err.code === '23502') {
-    // PostgreSQL not null violation
     statusCode = 400;
     errorCode = 'VALIDATION_REQUIRED_FIELD_MISSING';
     message = 'Required field is missing';
   } else if (err.code === '22P02') {
-    // PostgreSQL invalid text representation
     statusCode = 400;
     errorCode = 'VALIDATION_INVALID_FORMAT';
     message = 'Invalid data format';
   }
 
-  // Log error for debugging (in production, use proper logging service)
   if (statusCode >= 500) {
     console.error('Server Error:', {
       message: err.message,
@@ -164,21 +148,18 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Send error response
   res.status(statusCode).json({
     error: {
       code: errorCode,
-      message: message,
+      message,
       ...(details && { details }),
       timestamp: new Date().toISOString(),
       request_id: req.id,
-      // Include stack trace only in development
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     },
   });
 }
 
-// Async error wrapper to catch errors in async route handlers
 function asyncHandler(fn) {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
